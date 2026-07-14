@@ -1,8 +1,10 @@
 # login-app
 เข้าในเว็บ vecskill.bncc.ac.th
+พิมพ์
 docker run -d -p 9443:9443 --name portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce:latest
 
-1.ใน Drive C ให้สร้าง Folder ชื่อว่า www
+1.ใน Drive C ให้สร้าง Folder ชื่อว่า (ไรก็ได้จะใช้หน้าเว็บก็ได้)
+
 2.ให้สร้าง Docker Volume ชื่อ db_data ถ้ายังไม่ได้สร้าง
 >docker volume create db_data
 
@@ -12,6 +14,7 @@ docker run -d -p 9443:9443 --name portainer --restart=always -v /var/run/docker.
 
 4.จากนั้นคัดลอก Compose ด้านล่างนี้ไปใส่ในช่องของ Stacks -> Add stack ->  Web editor
 4.1 ตั้งชื่อ stack ชื่อ web-devops
+
 
 4.2 นำข้อความด้านล่างไปใส่ในช่อง 
 # กำหนด Volume สำหรับเก็บข้อมูล
