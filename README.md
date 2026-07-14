@@ -3,22 +3,14 @@
 ขั้นตอนการติดตั้งระบบผ่านทางเว็บ [vecskill.bncc.ac.th](http://vecskill.bncc.ac.th) และการคอนฟิก Docker ผ่าน Portainer
 
 ---
-
 ### 1. 🐳 ติดตั้งและตรวจสอบ Portainer
 ทำการเชื่อมต่อเข้าเซิร์ฟเวอร์ และรันคำสั่งด้านล่างนี้เพื่อติดตั้ง Portainer:
-
 ```bash
 # รัน Container สำหรับ Portainer
 docker run -d -p 9443:9443 --name portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce:latest
-
 # ดู Log เพื่อตรวจสอบความถูกต้องและเข้าใช้งาน
 docker logs portainer
-2. 📁 เตรียมความพร้อมของระบบ (Pre-requisites)
-สร้าง Folder: ใน Drive C: ให้สร้าง Folder (ตั้งชื่อเป็นอะไรก็ได้ หรือจะสร้างผ่านหน้าเว็บ/หน้าต่าง Windows ปกติก็ได้) เพื่อเอาไว้เก็บไฟล์ Source Code
-
-สร้าง Docker Volume: รันคำสั่งนี้เพื่อสร้าง Volume สำหรับเก็บข้อมูล Database (หากเคยสร้างแล้วให้ข้ามขั้นตอนนี้)
 docker volume create db_data
-สร้าง Docker Network: รันคำสั่งนี้เพื่อสร้าง Network ให้ Container คุยกันได้ (หากเคยสร้างแล้วให้ข้ามขั้นตอนนี้)
 docker network create dev_net
 ### 🛠️ Docker Compose Configuration
 
