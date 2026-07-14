@@ -1,6 +1,7 @@
 # login-app
 เข้าในเว็บ vecskill.bncc.ac.th
 docker run -d -p 9443:9443 --name portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce:latest
+
 1.ใน Drive C ให้สร้าง Folder ชื่อว่า www
 2.ให้สร้าง Docker Volume ชื่อ db_data ถ้ายังไม่ได้สร้าง
 >docker volume create db_data
