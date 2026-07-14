@@ -1,12 +1,46 @@
-3. 🛠️ การตั้งค่าระบบผ่าน Portainer Stacks
-เข้าใช้งานหน้าเว็บ Portainer ไปที่เมนู Stacks -> คลิกปุ่ม Add stack
+# 🚀 login-app Setup Guide
 
-ในช่อง Name ให้ตั้งชื่อ Stack ว่า: web-devops
+ขั้นตอนการติดตั้งระบบผ่านทางเว็บ [vecskill.bncc.ac.th](http://vecskill.bncc.ac.th) และการคอนฟิก Docker ผ่าน Portainer
 
-ในส่วนของ Build method ให้เลือกเป็น Web editor
+---
 
-คัดลอกโค้ดคอนฟิก YAML ด้านล่างนี้ทั้งหมด ไปวางในช่อง Web editor:
+## 1. 🐳 ติดตั้งและตรวจสอบ Portainer
+ทำการเชื่อมต่อเข้าเซิร์ฟเวอร์ และรันคำสั่งเพื่อติดตั้ง Portainer:
 
+```bash
+docker run -d -p 9443:9443 --name portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce:latest
+```
+
+ตรวจสอบสถานะการทำงานด้วยคำสั่ง:
+```bash
+docker logs portainer
+```
+
+---
+
+## 2. 📁 เตรียมความพร้อมของระบบ (Pre-requisites)
+
+1. ใน Drive **C:** ให้สร้าง Folder (ตั้งชื่ออะไรก็ได้ตามต้องการ) เพื่อเอาไว้เก็บไฟล์โปรเจกต์
+2. สร้าง Docker Volume ชื่อ **db_data** (หากยังไม่ได้สร้าง) โดยรันคำสั่ง:
+```bash
+docker volume create db_data
+```
+
+3. สร้าง Docker Network ชื่อ **dev_net** (หากยังไม่ได้สร้าง) โดยรันคำสั่ง:
+```bash
+docker network create dev_net
+```
+
+---
+
+## 3. 🛠️ การตั้งค่าระบบผ่าน Portainer Stacks
+
+1. เข้าใช้งานหน้าเว็บ Portainer ไปที่เมนู **Stacks** -> คลิกปุ่ม **Add stack**
+2. ในช่อง **Name** ให้ตั้งชื่อ Stack ว่า: `web-devops`
+3. ในส่วนของ **Build method** ให้เลือกเป็น **Web editor**
+4. คัดลอกโค้ดคอนฟิก YAML ด้านล่างนี้ทั้งหมด ไปวางในช่อง Web editor:
+
+```yaml
 # กำหนด Volume สำหรับเก็บข้อมูล
 volumes:
   db_data:
@@ -69,3 +103,4 @@ services:
       - mariadb                          # รอให้ MariaDB รันก่อนค่อยรัน phpMyAdmin
     networks:
       - dev_net
+```
