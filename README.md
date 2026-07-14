@@ -3,20 +3,29 @@
 ขั้นตอนการติดตั้งระบบผ่านทางเว็บ [vecskill.bncc.ac.th](http://vecskill.bncc.ac.th) และการคอนฟิก Docker ผ่าน Portainer
 
 ---
-### 1. 🐳 ติดตั้งและตรวจสอบ Portainer
-ทำการเชื่อมต่อเข้าเซิร์ฟเวอร์ และรันคำสั่งด้านล่างนี้เพื่อติดตั้ง Portainer:
+
+## 1. 🐳 ติดตั้งและตรวจสอบ Portainer
+ทำการเชื่อมต่อเข้าเซิร์ฟเวอร์ และรันคำสั่งเพื่อติดตั้ง Portainer:
+
 ```bash
-# รัน Container สำหรับ Portainer
 docker run -d -p 9443:9443 --name portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce:latest
-# ดู Log เพื่อตรวจสอบความถูกต้องและเข้าใช้งาน
+ตรวจสอบสถานะการทำงานด้วยคำสั่ง:
 docker logs portainer
+2. 📁 เตรียมความพร้อมของระบบ (Pre-requisites)
+ใน Drive C: ให้สร้าง Folder (ตั้งชื่ออะไรก็ได้ตามต้องการ) เพื่อเอาไว้เก็บไฟล์โปรเจกต์
+
+สร้าง Docker Volume ชื่อ db_data (หากยังไม่ได้สร้าง) โดยรันคำสั่ง:
 docker volume create db_data
+สร้าง Docker Network ชื่อ dev_net (หากยังไม่ได้สร้าง) โดยรันคำสั่ง:
 docker network create dev_net
-### 🛠️ Docker Compose Configuration
+3. 🛠️ การตั้งค่าระบบผ่าน Portainer Stacks
+เข้าใช้งานหน้าเว็บ Portainer ไปที่เมนู Stacks -> คลิกปุ่ม Add stack
 
-สร้างไฟล์ `docker-compose.yml` แล้วคัดลอกโค้ดด้านล่างนี้ไปใส่ได้เลยครับ:
+ในช่อง Name ให้ตั้งชื่อ Stack ว่า: web-devops
 
-```yaml
+ในส่วนของ Build method ให้เลือกเป็น Web editor
+
+คัดลอกโค้ดคอนฟิก YAML ด้านล่างนี้ทั้งหมด ไปวางในช่อง Web editor:
 # กำหนด Volume สำหรับเก็บข้อมูล
 volumes:
   db_data:
@@ -79,5 +88,3 @@ services:
       - mariadb                          # รอให้ MariaDB รันก่อนค่อยรัน phpMyAdmin
     networks:
       - dev_net
-
-4.3 คลิกที่ Deploy
