@@ -1,6 +1,6 @@
 # 🚀 login-app Project & Setup Guide
 
-คู่มือการติดตั้งเซิร์ฟเวอร์ด้วย Docker, Portainer และขั้นตอนการพัฒนา Back-End ด้วย Node.js + MySQL สำหรับระบบ Login
+คู่มือการติดตั้งเซิร์ฟเวอร์ด้วย Docker, Portainer และขั้นตอนการพัฒนา Back-End ด้วย Node.js + MySQL สำหรับระบบ Login และระบบจัดการผู้ใช้ (CRUD API)
 
 ---
 
@@ -130,9 +130,9 @@ login-app
 
 ---
 
-### 2. การเตรียมตัวและสร้างโปรเจกต์[cite: 1]
+### 2. การเตรียมตัวและสร้างโปรเจกต์
 
-รันคำสั่งเหล่านี้ใน Terminal เพื่อเริ่มสร้างโปรเจกต์ Node.js และติดตั้ง Packages ที่จำเป็น:
+รันคำสั่งเหล่านี้ใน Terminal เพื่อเริ่มสร้างโปรเจกต์ Node.js และติดตั้ง Packages ที่จำเป็น (**มีการติดตั้ง cors เพิ่มเติม**):
 
 ```bash
 # 1. สร้างโฟลเดอร์และเข้าสู่โฟลเดอร์โปรเจกต์
@@ -142,8 +142,8 @@ cd login-app
 # 2. เริ่มต้นโปรเจกต์ Node.js (สร้าง package.json)
 npm init -y
 
-# 3. ติดตั้ง Package สำหรับ Web Server และการเชื่อมต่อ Database
-npm install express mysql2
+# 3. ติดตั้ง Package สำหรับ Web Server, การเชื่อมต่อ Database และ CORS
+npm install express mysql2 cors
 
 # 4. ติดตั้ง Nodemon เพื่อรีสตาร์ท Server อัตโนมัติเวลาแก้ไขโค้ด (ติดตั้งแบบ Global)
 npm install -g nodemon
@@ -212,39 +212,69 @@ module.exports = connection;
 
 ---
 
-### 5. สร้าง Web Server และ API Login (`server.js`)
+### 5. สร้าง Web Server และ API จัดการระบบ (`server.js`)
 
-สร้างไฟล์ `server.js` ในโฟลเดอร์หลักของโปรเจกต์ และใส่โค้ดสำหรับรัน Express Server และเขียน API Endpoint ดังนี้:
+สร้างไฟล์ `server.js` ในโฟลเดอร์หลักของโปรเจกต์ และใส่โค้ดที่มีการเปิดใช้งาน **CORS** และ **API สำหรับจัดการข้อมูลผู้ใช้ (CRUD)** ดังนี้:
 
 ```javascript
 const express = require("express");
+const cors = require("cors"); // 1. นำเข้า CORS
 const app = express();
-const db = require("./db"); // เรียกใช้ไฟล์ db.js ที่เราเชื่อมต่อไว้
+const db = require("./db");
 
-app.use(express.json()); // อนุญาตให้รับส่งข้อมูลแบบ JSON format
+app.use(cors()); // 2. เปิดใช้งาน CORS ให้ทุกโดเมนเข้าถึงได้
+app.use(express.json());
+
 const PORT = 3000;
 
-// เส้นทางหน้าแรกสำหรับตรวจสอบว่าเซิร์ฟเวอร์ทำงานอยู่หรือไม่
 app.get("/", (req, res) => {
   res.send("Node.js Server Ready");
 });
 
-// API สำหรับการ Login
-app.post("/login", (req, res) => {
-  console.log("Request Body:", req.body);
-  const username = req.body.username;
-  const password = req.body.password;
+app.listen(PORT, () => {
+  console.clear();
+  console.log(`
+==================================================
+            BACKEND SERVER STARTED
+==================================================
 
-  // ใช้เครื่องหมาย ? (Placeholder) เพื่อป้องกัน SQL Injection
-  const sql = "SELECT * FROM users WHERE username = ? AND password = ?";
+ Server URL
+ http://localhost:${PORT}
+
+ API Endpoint
+ POST http://localhost:${PORT}/login
+
+ Test Commandline (CMD)
+ curl -X POST http://localhost:3000/login -H "Content-Type: application/json" -d "{\"username\": \"admin\", \"password\": \"1234\"}"
+ 
+ Test Browser
+ URL http://localhost:${PORT}
+
+ Test Postman
+ Method : POST
+ URL    : http://localhost:${PORT}/login
+ Body (JSON)
+        {
+          "username":"admin",
+          "password":"1234"
+        }
+==================================================
+`);
+});
+
+// === 1. ระบบ Login ===
+app.post("/login", (req, res) => {
+  const { username, password } = req.body;
+  const sql = "SELECT * FROM users WHERE username = ? AND password = ? ";
   
   db.query(sql, [username, password], (err, result) => {
     if (err) {
+      console.error("Login Database Error:", err);
       return res.status(500).json({
+        status: false,
         message: "Database Error",
       });
     }
-
     if (result.length > 0) {
       res.json({
         status: true,
@@ -259,25 +289,93 @@ app.post("/login", (req, res) => {
   });
 });
 
-// เปิดการทำงานของ Server บน Port ที่กำหนด
-app.listen(PORT, () => {
-  console.clear();
-  console.log(`
-==================================================
-        BACKEND SERVER STARTED SUCCESSFULLY
-==================================================
-Server URL:
-  http://localhost:${PORT}
+// === 2. ดึงข้อมูล User ทั้งหมด ===
+app.get('/api/users', (req, res) => {
+  const sql = 'SELECT * FROM users';
+  db.query(sql, (err, result) => {
+    if (err) {
+      console.error("Get Users Error:", err);
+      return res.status(500).json({
+        success: false,
+        message: 'Database Error'
+      });
+    }
+    res.status(200).json({
+      success: true,
+      data: result
+    });
+  });
+});
 
-API Endpoint for Login:
-  POST http://localhost:${PORT}/login
+// === 3. ดึงข้อมูล User เฉพาะบุคคล ===
+app.get('/api/users/:id', (req, res) => {
+  const id = req.params.id;
+  db.query('SELECT * FROM users WHERE id=?', [id], (err, result) => {
+    if (err) {
+      console.error(`Get User ID ${id} Error:`, err);
+      return res.status(500).json({
+        success: false,
+        message: 'Database Error'
+      });
+    }
+    if (result.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User Not Found'
+      });
+    }
+    res.status(200).json({
+      success: true,
+      data: result[0]
+    });
+  });
+});
 
-Test Command line (curl):
-  curl -X POST http://localhost:${PORT}/login ^
-  -H "Content-Type: application/json" ^
-  -d "{\"username\": \"admin\", \"password\": \"1234\"}"
-==================================================
-  `);
+// === 4. สร้าง User ใหม่ (เพิ่มข้อมูลผู้ใช้ใหม่) ===
+app.post('/api/users', (req, res) => {
+  const { username, password, fullname } = req.body;
+  const sql = `INSERT INTO users (username, password, fullname) VALUES(?, ?, ?)`;
+  
+  db.query(sql, [username, password, fullname], (err, result) => {
+    if (err) {
+      console.error("Create User Error:", err);
+      return res.status(500).json({
+        success: false,
+        message: 'Database Error หรือข้อมูลซ้ำซ้อน'
+      });
+    }
+    res.status(201).json({
+      success: true,
+      message: 'User Created',
+      id: result.insertId
+    });
+  });
+});
+
+// === 5. อัปเดตข้อมูล User ===
+app.put('/api/users/:id', (req, res) => {
+  const id = req.params.id;
+  const { password, fullname } = req.body;
+  
+  db.query(`UPDATE users SET password=?, fullname=? WHERE id=?`, [password, fullname, id], (err, result) => {
+    if (err) {
+      console.error(`Update User ID ${id} Error:`, err);
+      return res.status(500).json({
+        success: false,
+        message: 'Database Error'
+      });
+    }
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User Not Found'
+      });
+    }
+    res.status(200).json({
+      success: true,
+      message: 'Updated'
+    });
+  });
 });
 ```
 
@@ -291,42 +389,33 @@ Test Command line (curl):
 nodemon server.js
 ```
 
-#### 6.2 ทดสอบด้วย Command Line (สำหรับ Windows)
-เปิดโปรแกรม CMD / Terminal ขึ้นมาใหม่ แล้วลองเรียกใช้คำสั่ง `curl` เพื่อทดสอบส่ง Request ไปยัง API:
+#### 6.2 วิธีทดสอบระบบ Login
 
-* **กรณีใส่ Username / Password ถูกต้อง:**
-```bash
-curl -X POST http://localhost:3000/login -H "Content-Type: application/json" -d "{\"username\": \"admin\", \"password\": \"1234\"}"
-```
-*ผลลัพธ์ที่ควรได้รับ:*
-```json
-{"status":true,"message":"Login Success"}
-```
+* **ทดสอบด้วย Command Line (CMD):**
+  ```bash
+  curl -X POST http://localhost:3000/login -H "Content-Type: application/json" -d "{\"username\": \"admin\", \"password\": \"1234\"}"
+  ```
 
-* **กรณีรหัสผ่านไม่ถูกต้อง:**
-```bash
-curl -X POST http://localhost:3000/login -H "Content-Type: application/json" -d "{\"username\": \"admin\", \"password\": \"12345\"}"
-```
-*ผลลัพธ์ที่ควรได้รับ:*
-```json
-{"status":false,"message":"Username หรือ Password ไม่ถูกต้อง"}
-```
+#### 6.3 ➕ วิธีเพิ่มข้อมูลผู้ใช้ใหม่ (Create User)
+ในไฟล์ `server.js` ชุดใหม่นี้มี Endpoint สำหรับเพิ่มผู้ใช้มาให้แล้ว สามารถใช้วิธีด้านล่างนี้เพื่อกรอกข้อมูลผู้ใช้ใหม่ลงฐานข้อมูลได้เลยครับ:
 
-#### 6.3 ทดสอบด้วย Postman
-1. เลือก HTTP Method เป็น **POST**
-2. กรอก URL ของ API: `http://localhost:3000/login`
-3. ไปที่แท็บ **Body** -> เลือกประเภทเป็น **raw** -> ปรับฟอร์แมตเป็น **JSON**
-4. ใส่ข้อมูลที่ต้องการทดสอบส่งไปดังนี้:
-   ```json
-   {
-     "username": "admin",
-     "password": "1234"
-   }
-   ```
-5. กดปุ่ม **Send** เพื่อดูผลลัพธ์การตอบกลับในกล่อง Response ด้านล่าง
-```json
-{
-  "status": true,
-  "message": "Login Success"
-}
-```
+* **วิธีที่ 1: เพิ่มผู้ใช้ผ่าน Command Line (CMD)**
+  ก๊อบปี้คำสั่งนี้ไปรันในหน้าต่าง CMD บรรทัดเดียว เพื่อเพิ่มสมาชิกใหม่ชื่อ `user01`:
+  ```bash
+  curl -X POST http://localhost:3000/api/users -H "Content-Type: application/json" -d "{\"username\": \"user01\", \"password\": \"5678\", \"fullname\": \"New Student\"}"
+  ```
+  *ผลลัพธ์ที่ได้รับกลับมา:* `{"success":true,"message":"User Created","id":2}`
+
+* **วิธีที่ 2: เพิ่มผู้ใช้ผ่าน Postman**
+  1. เลือก Method เป็น **POST**
+  2. กรอก URL: `http://localhost:3000/api/users`
+  3. ไปที่แท็บ **Body** -> เลือก **raw** -> ปรับฟอร์แมตขวาสุดเป็น **JSON**
+  4. ระบุข้อมูล JSON ผู้ใช้ใหม่ที่ต้องการลงไป เช่น:
+     ```json
+     {
+       "username": "somchai",
+       "password": "password99",
+       "fullname": "Somchai Jaidee"
+     }
+     ```
+  5. กดปุ่ม **Send** ข้อมูลจะถูกบันทึกเข้าสู่ MySQL ทันที
